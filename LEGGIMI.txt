@@ -1,0 +1,77 @@
+NANA - la tua piattaforma per clienti, lavoro e impegni personali
+Come metterla online su SiteGround
+================================================================
+
+Serve: PHP 8.1 o superiore e un database MySQL (su SiteGround ci sono entrambi).
+
+1. CREA IL DATABASE
+   Site Tools → Site → MySQL → Databases → "Create Database".
+   Poi in "Users" crea un utente con una password forte e collegalo al database
+   con tutti i permessi ("Manage Access" → All Privileges).
+   Annota: nome database, nome utente, password. L'host è "localhost".
+
+2. CARICA I FILE
+   Site Tools → Site → File Manager → public_html.
+   Crea una cartella, per esempio "nana", entra e carica lo zip.
+   Clic destro sullo zip → Extract. Poi elimina lo zip.
+   (Puoi anche usare un sottodominio, es. nana.hypebang.it: Site Tools → Domain → Subdomains.)
+
+3. INSTALLA
+   Apri nel browser: https://tuodominio.it/nana/install/
+   Inserisci i dati del database, la tua email e una password (almeno 10 caratteri).
+   Se vuoi prima provare, spunta "Carica dati di esempio": li elimini poi da
+   Impostazioni con un solo clic.
+
+4. ELIMINA LA CARTELLA install
+   Dal File Manager cancella la cartella "install". È importante per la sicurezza.
+
+5. HTTPS (prima di aprire la piattaforma)
+   Site Tools → Security → SSL Manager: controlla che il certificato gratuito
+   Let's Encrypt sia attivo sul dominio. La piattaforma funziona solo in https.
+
+6. PRIME COSE DA FARE
+   Impostazioni → Sicurezza e privacy: attiva la verifica in due passaggi.
+   Impostazioni → dati della tua attività, logo, IVA predefinita (0 se sei forfettaria,
+   con la dicitura fiscale) e listino servizi.
+
+DOPPIA SERRATURA (consigliata)
+Nana ha già il suo accesso con password e dice a Google di non indicizzare nulla.
+Per una protezione in più puoi chiedere una password già prima della pagina di
+accesso, così nessuno, nemmeno i motori di ricerca, vede che lì c'è qualcosa:
+   Site Tools → Security → Protected URLs
+   - in "URLs" aggiungi la cartella di Nana (es. /nana)
+   - in "Users" crea un utente con una password diversa da quella di Nana
+Il browser ti chiederà quella password una volta, poi potrai salvarla.
+
+SICUREZZA E PRIVACY
+- Attiva subito la verifica in due passaggi: Impostazioni → Sicurezza e privacy.
+  Ti serve un'app sul telefono (Google Authenticator, Authy, 1Password…).
+  Se perdi il telefono: nel File Manager apri config.php, metti
+  'disattiva_2fa' => true, entra, riattivala con il telefono nuovo e rimetti false.
+- Usa una password lunga e solo per questa piattaforma.
+- I dati restano sul tuo hosting. La piattaforma non carica nulla da servizi esterni,
+  non usa cookie di tracciamento e non è indicizzata da Google.
+- I file caricati hanno nomi casuali impossibili da indovinare e si aprono solo
+  dopo l'accesso.
+- Se un cliente chiede quali dati conservi su di lui: scheda cliente → "Esporta
+  tutti i dati di questo cliente". Se chiede la cancellazione: Modifica →
+  Elimina cliente (cancella anche i suoi file).
+- Ricordati di indicare nell'informativa privacy che dai ai clienti che i loro dati
+  sono conservati su SiteGround (hosting nell'UE).
+- Il calendario per il telefono è spento: se lo attivi, i nomi dei clienti passano
+  anche da Google o Apple.
+
+FACOLTATIVO
+- Promemoria via email ogni mattina: in config.php metti 'mail_enabled' => true,
+  poi Site Tools → Devs → Cron Jobs, comando:
+     php /home/customer/www/TUODOMINIO/public_html/nana/cron.php
+  ogni giorno alle 7:30. (Il percorso esatto lo vedi nel File Manager.)
+
+BACKUP
+SiteGround fa backup giornalieri. In più, da Impostazioni (con la password) puoi
+scaricare un backup completo (.sql). Contiene tutti i dati dei clienti: tienilo in
+un posto sicuro e non mandarlo per email.
+
+NOTA SULLE FATTURE
+La piattaforma tiene traccia di fatture, scadenze e incassi. La fattura elettronica
+va comunque emessa con il tuo programma o dal portale dell'Agenzia delle Entrate.
