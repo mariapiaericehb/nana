@@ -7,12 +7,17 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: demo
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
 jobs:
   demo:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       mysql:
         image: mysql:8.0
@@ -48,10 +53,11 @@ jobs:
           curl -s -b $J http://localhost:8000/index.php | grep -q 'class="app"'
 
       - name: Scarica tutte le pagine
+        timeout-minutes: 10
         run: |
           C=$(grep -o 'hbcrm.*' /tmp/cookies.txt | awk '{print $1"="$2}' | tail -1)
           echo "cookie: ${C%%=*}"
-          wget --mirror --page-requisites --adjust-extension --convert-links \
+          wget --mirror --level=3 --page-requisites --adjust-extension --convert-links \
                --restrict-file-names=windows --no-host-directories -e robots=off \
                --header "Cookie: $C" \
                --reject-regex '(logout|login|file|ical|cron)\.php|p=(api|azioni|esporta)' \
