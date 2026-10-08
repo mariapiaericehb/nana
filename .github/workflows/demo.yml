@@ -1,0 +1,76 @@
+# Crea una versione statica e navigabile di Nana con i dati di esempio
+# e la pubblica sul branch gh-pages (GitHub Pages).
+name: Demo statica
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: demo
+          MYSQL_DATABASE: nana
+        ports: ['3306:3306']
+        options: --health-cmd="mysqladmin ping -pdemo" --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, mbstring
+
+      - name: Avvia Nana e installa i dati di esempio
+        run: |
+          php -S localhost:8000 > /tmp/php.log 2>&1 &
+          sleep 2
+          curl -sf -o /dev/null http://localhost:8000/install/index.php \
+            --data-urlencode db_host=127.0.0.1 -d db_name=nana -d db_user=root -d db_pass=demo \
+            -d nome=Demo -d email=demo@example.com -d password=demopassword123 -d demo=1
+          test -f config.php
+          sed -i "s/'force_https' => true/'force_https' => false/" config.php
+
+      - name: Accedi
+        run: |
+          J=/tmp/cookies.txt
+          T=$(curl -s -c $J http://localhost:8000/login.php | grep -o 'name="_csrf" value="[^"]*"' | head -1 | sed 's/.*value="//;s/"$//')
+          curl -s -b $J -c $J -o /dev/null http://localhost:8000/login.php \
+            -d _csrf="$T" -d email=demo@example.com -d password=demopassword123
+          curl -s -b $J http://localhost:8000/index.php | grep -q 'class="app"'
+
+      - name: Scarica tutte le pagine
+        run: |
+          wget --mirror --page-requisites --adjust-extension --convert-links \
+               --restrict-file-names=windows --no-host-directories -e robots=off \
+               --load-cookies /tmp/cookies.txt \
+               --reject-regex '(logout|login|file|ical|cron)\.php|p=(api|azioni|esporta)' \
+               -P site http://localhost:8000/index.php || true
+          ls site
+
+      - name: Pagina iniziale e avviso demo
+        run: |
+          cd site
+          cat > index.html <<'HTML'
+          <!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=index.php.html"><a href="index.php.html">Apri la demo di Nana</a>
+          HTML
+          touch .nojekyll
+          find . -name '*.html' ! -name index.html -exec sed -i \
+            's#<body\([^>]*\)>#<body\1><div style="position:fixed;bottom:12px;right:12px;z-index:9999;background:\#222;color:\#fff;font:13px sans-serif;padding:8px 12px;border-radius:8px;opacity:.85">Demo statica · dati di esempio · i pulsanti non salvano</div>#' {} +
+
+      - name: Pubblica su gh-pages
+        run: |
+          cd site
+          git init -q -b gh-pages
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A && git commit -qm "Demo statica da ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
