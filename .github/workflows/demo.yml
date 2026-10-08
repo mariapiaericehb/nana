@@ -49,9 +49,11 @@ jobs:
 
       - name: Scarica tutte le pagine
         run: |
+          C=$(grep -o 'hbcrm.*' /tmp/cookies.txt | awk '{print $1"="$2}' | tail -1)
+          echo "cookie: ${C%%=*}"
           wget --mirror --page-requisites --adjust-extension --convert-links \
                --restrict-file-names=windows --no-host-directories -e robots=off \
-               --load-cookies /tmp/cookies.txt \
+               --header "Cookie: $C" \
                --reject-regex '(logout|login|file|ical|cron)\.php|p=(api|azioni|esporta)' \
                -P site http://localhost:8000/index.php || true
           ls site
